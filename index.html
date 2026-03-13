@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>포지마스터 대장간 계산기</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f0f0f;
+color:white;
+padding:30px;
+}
+
+h1{
+color:#ffd700;
+}
+
+.card{
+background:#1e1e1e;
+padding:20px;
+margin-bottom:20px;
+border-radius:10px;
+}
+
+select,input{
+padding:6px;
+margin:3px;
+}
+
+.result{
+font-size:20px;
+color:#00ffc3;
+margin-top:10px;
+}
+
+.stat{
+color:#ffd700;
+margin-top:5px;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+td,th{
+border:1px solid #444;
+padding:6px;
+text-align:center;
+}
+
+th{
+background:#333;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>포지마스터 대장간 계산기</h1>
+<p>제작자 : 21서버 Troud</p>
+
+<div class="card">
+<h2>연구 티어 설정</h2>
+<div id="tiers"></div>
+</div>
+
+<div class="card">
+<h2>대장간 레벨</h2>
+
+현재 레벨
+<input id="currentLevel" type="number" value="1">
+
+목표 레벨
+<input id="targetLevel" type="number" value="10">
+
+</div>
+
+<div class="card">
+
+<h2>계산 결과</h2>
+
+<div class="result" id="costResult"></div>
+<div class="result" id="timeResult"></div>
+<div class="result" id="hammerValue"></div>
+<div class="result" id="hammerCount"></div>
+
+</div>
+
+<div class="card">
+
+<h2>대장간 업그레이드 데이터</h2>
+
+<table id="forgeTable">
+
+<tr>
+<th>Level</th>
+<th>Cost</th>
+<th>Time</th>
+</tr>
+
+</table>
+
+</div>
+
+<script>
+
+const categories=[
+{key:"timeAccel",name:"대장간 업그레이드 시간 가속"},
+{key:"costReduction",name:"대장간 업그레이드 비용 감소"},
+{key:"sellPrice",name:"장비 판매 가격"},
+{key:"freeRefine",name:"무료 제련 기회"},
+{key:"equipMax",name:"장비 최대 레벨"}
+]
+
+const forgeData={
+2:{cost:400,time:300},
+3:{cost:700,time:900},
+4:{cost:1500,time:1800},
+5:{cost:3500,time:3600},
+6:{cost:10000,time:7200},
+7:{cost:25000,time:27180},
+8:{cost:50000,time:47160},
+9:{cost:100000,time:67140},
+10:{cost:150000,time:87180},
+11:{cost:250000,time:126000},
+12:{cost:336000,time:176400},
+13:{cost:452000,time:234000},
+14:{cost:612000,time:309600},
+15:{cost:830000,time:388800},
+16:{cost:1120000,time:471600},
+17:{cost:1512000,time:556200},
+18:{cost:2037000,time:645600},
+19:{cost:2752000,time:734400},
+20:{cost:3717000,time:820800},
+21:{cost:5020000,time:903180},
+22:{cost:6780000,time:946800},
+23:{cost:9160000,time:1047600},
+24:{cost:12300000,time:1105200},
+25:{cost:16600000,time:1184400},
+26:{cost:20000000,time:1263600},
+27:{cost:24000000,time:1358400},
+28:{cost:28800000,time:1425600},
+29:{cost:34600000,time:1506000},
+30:{cost:41500000,time:1584000},
+31:{cost:49800000,time:1674000},
+32:{cost:59800000,time:1737000},
+33:{cost:71700000,time:1810800},
+34:{cost:86100000,time:1875600},
+35:{cost:103000000,time:1987200}
+}
+
+function format(n){
+
+n=Math.round(n)
+
+if(n>=1000000){
+return (n/1000000).toFixed(2).replace(/\.00$/,"")+"m"
+}
+
+if(n>=1000){
+return (n/1000).toFixed(1).replace(/\.0$/,"")+"k"
+}
+
+return n
+}
+
+function formatTime(sec){
+
+let d=Math.floor(sec/86400)
+sec%=86400
+
+let h=Math.floor(sec/3600)
+sec%=3600
+
+let m=Math.floor(sec/60)
+
+return d+"d "+h+"h "+m+"m"
+}
+
+function createUI(){
+
+let html=""
+
+categories.forEach(cat=>{
+
+html+="<div><b>"+cat.name+"</b><br>"
+
+for(let i=1;i<=5;i++){
+
+html+="T"+i+" <select id='"+cat.key+i+"' onchange='calculate()'>"
+
+for(let j=0;j<=5;j++){
+html+="<option>"+j+"</option>"
+}
+
+html+="</select> "
+
+}
+
+html+="<div class='stat' id='"+cat.key+"Stat'></div>"
+html+="</div><br>"
+
+})
+
+document.getElementById("tiers").innerHTML=html
+
+}
+
+function getTotal(key){
+
+let sum=0
+
+for(let i=1;i<=5;i++){
+sum+=Number(document.getElementById(key+i).value)
+}
+
+return sum
+
+}
+
+function calculate(){
+
+let timeLvl=getTotal("timeAccel")
+let costLvl=getTotal("costReduction")
+let sellLvl=getTotal("sellPrice")
+let refineLvl=getTotal("freeRefine")
+let equipLvl=getTotal("equipMax")
+
+let timeAccel=timeLvl*0.04
+let costReduction=costLvl*0.02
+let sellPrice=sellLvl*0.02
+let refineChance=refineLvl*0.01
+let equipMax=99+(equipLvl*2)
+
+document.getElementById("timeAccelStat").innerText="현재 효과 : "+(timeAccel*100).toFixed(1)+"%"
+document.getElementById("costReductionStat").innerText="현재 효과 : "+(costReduction*100).toFixed(1)+"%"
+document.getElementById("sellPriceStat").innerText="현재 효과 : "+(sellPrice*100).toFixed(1)+"%"
+document.getElementById("freeRefineStat").innerText="현재 효과 : "+(refineChance*100).toFixed(1)+"%"
+document.getElementById("equipMaxStat").innerText="현재 효과 : "+equipMax+" 레벨"
+
+let hammerBase=Math.round(20*Math.pow(1.01,equipMax-1))
+let hammerSell=hammerBase*(1+sellPrice)
+
+/* 수정된 부분 */
+let refineMulti=1/(1-refineChance)
+
+let hammerValue=hammerSell*refineMulti
+
+let current=Number(document.getElementById("currentLevel").value)
+let target=Number(document.getElementById("targetLevel").value)
+
+let cost=0
+let time=0
+
+for(let i=current+1;i<=target;i++){
+
+if(forgeData[i]){
+cost+=forgeData[i].cost
+time+=forgeData[i].time
+}
+
+}
+
+let finalCost=cost*(1-costReduction)
+let finalTime=time/(1+timeAccel)
+
+let hammerNeed=finalCost/hammerValue
+
+document.getElementById("costResult").innerText="총 비용 : "+format(finalCost)
+document.getElementById("timeResult").innerText="총 시간 : "+formatTime(finalTime)
+document.getElementById("hammerValue").innerText="망치 가치 : "+format(hammerValue)
+document.getElementById("hammerCount").innerText="필요 망치 : "+format(Math.ceil(hammerNeed))
+
+}
+
+function createTable(){
+
+let html=""
+
+for(let lvl in forgeData){
+
+let row=forgeData[lvl]
+
+html+="<tr>"
+html+="<td>"+lvl+"</td>"
+html+="<td>"+format(row.cost)+"</td>"
+html+="<td>"+formatTime(row.time)+"</td>"
+html+="</tr>"
+
+}
+
+document.getElementById("forgeTable").innerHTML+=html
+
+}
+
+createUI()
+createTable()
+calculate()
+
+document.getElementById("currentLevel").oninput=calculate
+document.getElementById("targetLevel").oninput=calculate
+
+</script>
+
+</body>
+</html>
