@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -65,7 +65,7 @@ background:#333;
 <p>제작자 : 21서버 Dominant 클랜 리더 Troud</p>
 
 <div class="card">
-<h2>연구 티어 설정</h2>
+<h2> 기술 트리 티어 설정</h2>
 <div id="tiers"></div>
 </div>
 
@@ -77,6 +77,11 @@ background:#333;
 
 목표 레벨
 <input id="targetLevel" type="number" value="10">
+
+<br><br>
+
+현재 보유 코인
+<input id="ownedCoins" type="number" step="0.01" value="0"> m
 
 </div>
 
@@ -246,13 +251,14 @@ document.getElementById("equipMaxStat").innerText="현재 효과 : "+equipMax+" 
 let hammerBase=Math.round(20*Math.pow(1.01,equipMax-1))
 let hammerSell=hammerBase*(1+sellPrice)
 
-/* 수정된 부분 */
 let refineMulti=1/(1-refineChance)
 
 let hammerValue=hammerSell*refineMulti
 
 let current=Number(document.getElementById("currentLevel").value)
 let target=Number(document.getElementById("targetLevel").value)
+
+let ownedCoins=Number(document.getElementById("ownedCoins").value)*1000000
 
 let cost=0
 let time=0
@@ -269,12 +275,14 @@ time+=forgeData[i].time
 let finalCost=cost*(1-costReduction)
 let finalTime=time/(1+timeAccel)
 
-let hammerNeed=finalCost/hammerValue
+let remainingCost=Math.max(0,finalCost-ownedCoins)
+
+let hammerNeed=remainingCost/hammerValue
 
 document.getElementById("costResult").innerText="총 비용 : "+format(finalCost)
 document.getElementById("timeResult").innerText="총 시간 : "+formatTime(finalTime)
 document.getElementById("hammerValue").innerText="망치 가치 : "+format(hammerValue)
-document.getElementById("hammerCount").innerText="필요 망치 : "+Math.ceil(hammerNeed)
+document.getElementById("hammerCount").innerText="필요 망치 : "+Math.ceil(hammerNeed).toLocaleString()
 
 }
 
@@ -304,6 +312,7 @@ calculate()
 
 document.getElementById("currentLevel").oninput=calculate
 document.getElementById("targetLevel").oninput=calculate
+document.getElementById("ownedCoins").oninput=calculate
 
 </script>
 
