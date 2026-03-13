@@ -65,7 +65,7 @@ background:#333;
 <p>제작자 : 21서버 Dominant 클랜 리더 Troud</p>
 
 <div class="card">
-<h2> 기술 트리 티어 설정</h2>
+<h2>기술 트리 티어 설정</h2>
 <div id="tiers"></div>
 </div>
 
@@ -197,7 +197,7 @@ html+="<div><b>"+cat.name+"</b><br>"
 
 for(let i=1;i<=5;i++){
 
-html+="T"+i+" <select id='"+cat.key+i+"' onchange='calculate()'>"
+html+="T"+i+" <select id='"+cat.key+i+"' onchange='handleTierChange(\""+cat.key+"\","+i+")'>"
 
 for(let j=0;j<=5;j++){
 html+="<option>"+j+"</option>"
@@ -213,6 +213,28 @@ html+="</div><br>"
 })
 
 document.getElementById("tiers").innerHTML=html
+
+}
+
+function handleTierChange(key,tier){
+
+let currentValue=Number(document.getElementById(key+tier).value)
+
+if(currentValue>=2){
+
+for(let i=1;i<tier;i++){
+
+let prev=document.getElementById(key+i)
+
+if(Number(prev.value)===0){
+prev.value=5
+}
+
+}
+
+}
+
+calculate()
 
 }
 
