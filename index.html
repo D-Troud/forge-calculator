@@ -13,9 +13,7 @@ color:white;
 padding:30px;
 }
 
-h1{
-color:#ffd700;
-}
+h1{color:#ffd700;}
 
 .card{
 background:#1e1e1e;
@@ -51,9 +49,7 @@ padding:6px;
 text-align:center;
 }
 
-th{
-background:#333;
-}
+th{background:#333;}
 
 </style>
 
@@ -67,6 +63,21 @@ background:#333;
 <div class="card">
 <h2>기술 트리 티어 설정</h2>
 <div id="tiers"></div>
+</div>
+
+<div class="card">
+<h2>장비 최대 레벨 설정</h2>
+
+<b>장비 최대 레벨(전체 부위)</b>
+<div id="equipAll"></div>
+
+<br>
+
+<b>개별 부위 설정</b>
+<div id="equipParts"></div>
+
+<div class="stat" id="equipAvgStat"></div>
+
 </div>
 
 <div class="card">
@@ -101,13 +112,11 @@ background:#333;
 <h2>대장간 업그레이드 데이터</h2>
 
 <table id="forgeTable">
-
 <tr>
 <th>Level</th>
 <th>Cost</th>
 <th>Time</th>
 </tr>
-
 </table>
 
 </div>
@@ -118,9 +127,23 @@ const categories=[
 {key:"timeAccel",name:"대장간 업그레이드 시간 가속"},
 {key:"costReduction",name:"대장간 업그레이드 비용 감소"},
 {key:"sellPrice",name:"장비 판매 가격"},
-{key:"freeRefine",name:"무료 제련 기회"},
-{key:"equipMax",name:"장비 최대 레벨"}
+{key:"freeRefine",name:"무료 제련 기회"}
 ]
+
+const equipParts=[
+"weapon","glove","necklace","ring","helmet","armor","boots","belt"
+]
+
+const equipNames={
+weapon:"무기",
+glove:"장갑",
+necklace:"목걸이",
+ring:"반지",
+helmet:"헬멧",
+armor:"갑옷",
+boots:"신발",
+belt:"벨트"
+}
 
 const forgeData={
 2:{cost:400,time:300},
@@ -160,31 +183,32 @@ const forgeData={
 }
 
 function format(n){
-
 n=Math.round(n)
-
-if(n>=1000000){
-return (n/1000000).toFixed(2).replace(/\.00$/,"")+"m"
-}
-
-if(n>=1000){
-return (n/1000).toFixed(1).replace(/\.0$/,"")+"k"
-}
-
+if(n>=1000000)return (n/1000000).toFixed(2).replace(/\.00$/,"")+"m"
+if(n>=1000)return (n/1000).toFixed(1).replace(/\.0$/,"")+"k"
 return n
 }
 
 function formatTime(sec){
-
 let d=Math.floor(sec/86400)
 sec%=86400
-
 let h=Math.floor(sec/3600)
 sec%=3600
-
 let m=Math.floor(sec/60)
-
 return d+"d "+h+"h "+m+"m"
+}
+
+function createSelect(id){
+
+let html="<select id='"+id+"' onchange='handleTierChange(\""+id+"\")'>"
+
+for(let i=0;i<=5;i++){
+html+="<option>"+i+"</option>"
+}
+
+html+="</select>"
+
+return html
 }
 
 function createUI(){
@@ -196,15 +220,7 @@ categories.forEach(cat=>{
 html+="<div><b>"+cat.name+"</b><br>"
 
 for(let i=1;i<=5;i++){
-
-html+="T"+i+" <select id='"+cat.key+i+"' onchange='handleTierChange(\""+cat.key+"\","+i+")'>"
-
-for(let j=0;j<=5;j++){
-html+="<option>"+j+"</option>"
-}
-
-html+="</select> "
-
+html+="T"+i+" "+createSelect(cat.key+i)+" "
 }
 
 html+="<div class='stat' id='"+cat.key+"Stat'></div>"
@@ -214,23 +230,71 @@ html+="</div><br>"
 
 document.getElementById("tiers").innerHTML=html
 
+createEquipUI()
+
 }
 
-function handleTierChange(key,tier){
+function createEquipUI(){
 
-let currentValue=Number(document.getElementById(key+tier).value)
+let all=""
 
-if(currentValue>=2){
+for(let i=1;i<=5;i++){
+all+="T"+i+" "+createSelect("equipAll"+i)+" "
+}
+
+document.getElementById("equipAll").innerHTML=all
+
+let parts=""
+
+equipParts.forEach(p=>{
+
+parts+="<div>"+equipNames[p]+"<br>"
+
+for(let i=1;i<=5;i++){
+parts+="T"+i+" "+createSelect(p+i)+" "
+}
+
+parts+="</div><br>"
+
+})
+
+document.getElementById("equipParts").innerHTML=parts
+
+}
+
+function handleTierChange(id){
+
+let tier=Number(id.slice(-1))
+let prefix=id.slice(0,-1)
+let val=Number(document.getElementById(id).value)
+
+if(val===0){
+
+for(let i=tier+1;i<=5;i++){
+let el=document.getElementById(prefix+i)
+if(el)el.value=0
+}
+
+}
+
+if(val>=2){
 
 for(let i=1;i<tier;i++){
-
-let prev=document.getElementById(key+i)
-
-if(Number(prev.value)===0){
-prev.value=5
+let el=document.getElementById(prefix+i)
+if(el && Number(el.value)===0)el.value=5
 }
 
 }
+
+if(prefix==="equipAll"){
+
+equipParts.forEach(p=>{
+
+for(let i=1;i<=5;i++){
+document.getElementById(p+i).value=document.getElementById("equipAll"+i).value
+}
+
+})
 
 }
 
@@ -238,15 +302,24 @@ calculate()
 
 }
 
-function getTotal(key){
+function getTotal(prefix){
 
 let sum=0
 
 for(let i=1;i<=5;i++){
-sum+=Number(document.getElementById(key+i).value)
+let el=document.getElementById(prefix+i)
+if(el)sum+=Number(el.value)
 }
 
 return sum
+
+}
+
+function getEquipLevel(prefix){
+
+let lvl=getTotal(prefix)
+
+return 99+(lvl*2)
 
 }
 
@@ -256,21 +329,28 @@ let timeLvl=getTotal("timeAccel")
 let costLvl=getTotal("costReduction")
 let sellLvl=getTotal("sellPrice")
 let refineLvl=getTotal("freeRefine")
-let equipLvl=getTotal("equipMax")
 
 let timeAccel=timeLvl*0.04
 let costReduction=costLvl*0.02
 let sellPrice=sellLvl*0.02
 let refineChance=refineLvl*0.01
-let equipMax=99+(equipLvl*2)
 
 document.getElementById("timeAccelStat").innerText="현재 효과 : "+(timeAccel*100).toFixed(1)+"%"
 document.getElementById("costReductionStat").innerText="현재 효과 : "+(costReduction*100).toFixed(1)+"%"
 document.getElementById("sellPriceStat").innerText="현재 효과 : "+(sellPrice*100).toFixed(1)+"%"
 document.getElementById("freeRefineStat").innerText="현재 효과 : "+(refineChance*100).toFixed(1)+"%"
-document.getElementById("equipMaxStat").innerText="현재 효과 : "+equipMax+" 레벨"
 
-let hammerBase=Math.round(20*Math.pow(1.01,equipMax-1))
+let sum=0
+
+equipParts.forEach(p=>{
+sum+=getEquipLevel(p)
+})
+
+let equipAvg=sum/equipParts.length
+
+document.getElementById("equipAvgStat").innerText="평균 장비 최대 레벨 : "+equipAvg.toFixed(1)
+
+let hammerBase=Math.round(20*Math.pow(1.01,equipAvg-1))
 let hammerSell=hammerBase*(1+sellPrice)
 
 let refineMulti=1/(1-refineChance)
