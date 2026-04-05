@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>포지마스터 대장간 망치 계산기</title>
+
+<style>
+body{font-family:Arial;background:#0f0f0f;color:white;padding:30px;}
+h1{color:#ffd700;}
+.card{background:#1e1e1e;padding:20px;margin-bottom:20px;border-radius:10px;}
+select,input{padding:6px;margin:3px;}
+.result{font-size:20px;color:#00ffc3;margin-top:10px;}
+.stat{color:#ffd700;margin-top:5px;}
+table{border-collapse:collapse;width:100%;}
+td,th{border:1px solid #444;padding:6px;text-align:center;}
+th{background:#333;}
+</style>
+
+</head>
+
+<body>
+
+<h1>포지마스터 대장간 망치 계산기</h1>
+<p>제작자 : 21서버 Dominant 클랜 리더 Troud</p>
+
+<div class="card">
+<h2>기술 트리 티어 설정</h2>
+<div id="tiers"></div>
+</div>
+
+<div class="card">
+<h2>장비 최대 레벨 설정</h2>
+
+<b>장비 최대 레벨(전체 부위)</b>
+<div id="equipAll"></div>
+
+<br>
+
+<b>개별 부위 설정</b>
+<div id="equipParts"></div>
+
+<div class="stat" id="equipAvgStat"></div>
+
+</div>
+
+<!-- 🔥 위치 이동됨 -->
+<div class="card">
+<h2>승천 / 레벨 설정</h2>
+
+현재 승천
+<select id="currentAsc">
+<option>0</option><option>1</option><option>2</option><option>3</option>
+</select>
+
+현재 레벨
+<input id="currentLevel" type="number" value="1">
+
+<br><br>
+
+목표 승천
+<select id="targetAsc">
+<option>0</option><option>1</option><option>2</option><option>3</option>
+</select>
+
+목표 레벨
+<input id="targetLevel" type="number" value="10">
+
+<br><br>
+
+현재 보유 코인
+<input id="ownedCoins" type="number" step="0.01" value="0"> m
+
+</div>
+
+<div class="card">
+
+<h2>계산 결과</h2>
+
+<div class="result" id="costResult"></div>
+<div class="result" id="timeResult"></div>
+<div class="result" id="hammerValue"></div>
+<div class="result" id="hammerCount"></div>
+
+</div>
+
+<div class="card">
+
+<h2>대장간 업그레이드 데이터</h2>
+
+<table id="forgeTable">
+<tr>
+<th>Level</th>
+<th>Cost</th>
+<th>Time</th>
+</tr>
+</table>
+
+</div>
+
+<script>
+
+const forge_forgeData={
+2:{cost:400,time:300},
+3:{cost:700,time:900},
+4:{cost:1500,time:1800},
+5:{cost:3500,time:3600},
+6:{cost:10000,time:7200},
+7:{cost:25000,time:27180},
+8:{cost:50000,time:47160},
+9:{cost:99000,time:67140},
+10:{cost:150000,time:87180},
+11:{cost:249900,time:104400},
+12:{cost:348000,time:126000},
+13:{cost:448000,time:144000},
+14:{cost:600000,time:165600},
+15:{cost:800000,time:187200},
+16:{cost:910000,time:205200},
+17:{cost:1020000,time:226800},
+18:{cost:1130000,time:244800},
+19:{cost:1240000,time:266400},
+20:{cost:1350000,time:289800},
+21:{cost:1460000,time:313200},
+22:{cost:1570000,time:345600},
+23:{cost:1680000,time:396000},
+24:{cost:1790000,time:403200},
+25:{cost:1900000,time:450000},
+26:{cost:2010000,time:486000},
+27:{cost:2120000,time:518400},
+28:{cost:2230000,time:547200},
+29:{cost:2340000,time:576000},
+30:{cost:2450000,time:604800},
+31:{cost:2560000,time:633600},
+32:{cost:2670000,time:662400},
+33:{cost:2780000,time:691200},
+34:{cost:2890000,time:720000},
+35:{cost:3000000,time:756000}
+}
+
+const forge_categories=[
+{key:"timeAccel",name:"대장간 업그레이드 시간 가속"},
+{key:"costReduction",name:"대장간 업그레이드 비용 감소"},
+{key:"sellPrice",name:"장비 판매 가격"},
+{key:"freeRefine",name:"무료 제련 기회"}
+]
+
+const forge_equipParts=["weapon","glove","necklace","ring","helmet","armor","boots","belt"]
+
+const forge_equipNames={
+weapon:"무기",glove:"장갑",necklace:"목걸이",ring:"반지",
+helmet:"헬멧",armor:"갑옷",boots:"신발",belt:"벨트"
+}
+
+function forge_createSelect(id){
+let html="<select id='"+id+"' onchange='forge_handleTierChange(\""+id+"\")'>"
+for(let i=0;i<=5;i++){html+="<option>"+i+"</option>"}
+html+="</select>"
+return html
+}
+
+function forge_createUI(){
+let html=""
+forge_categories.forEach(cat=>{
+html+="<div><b>"+cat.name+"</b><br>"
+for(let i=1;i<=5;i++){html+="T"+i+" "+forge_createSelect(cat.key+i)+" "}
+html+="<div class='stat' id='"+cat.key+"Stat'></div></div><br>"
+})
+document.getElementById("tiers").innerHTML=html
+forge_createEquipUI()
+}
+
+function forge_createEquipUI(){
+let all=""
+for(let i=1;i<=5;i++){all+="T"+i+" "+forge_createSelect("equipAll"+i)+" "}
+document.getElementById("equipAll").innerHTML=all
+
+let parts=""
+forge_equipParts.forEach(p=>{
+parts+="<div>"+forge_equipNames[p]+"<br>"
+for(let i=1;i<=5;i++){parts+="T"+i+" "+forge_createSelect(p+i)+" "}
+parts+="</div><br>"
+})
+document.getElementById("equipParts").innerHTML=parts
+}
+
+function forge_handleTierChange(id){
+
+let tier=Number(id.slice(-1))
+let prefix=id.slice(0,-1)
+let val=Number(document.getElementById(id).value)
+
+if(val===0){
+for(let i=tier+1;i<=5;i++){
+let el=document.getElementById(prefix+i)
+if(el)el.value=0
+}
+}
+
+if(val>=2){
+for(let i=1;i<tier;i++){
+let el=document.getElementById(prefix+i)
+if(el && Number(el.value)===0)el.value=5
+}
+}
+
+if(prefix==="equipAll"){
+forge_equipParts.forEach(p=>{
+for(let i=1;i<=5;i++){
+document.getElementById(p+i).value=document.getElementById("equipAll"+i).value
+}
+})
+}
+
+forge_calculate()
+}
+
+function forge_getTotal(prefix){
+let sum=0
+for(let i=1;i<=5;i++){
+let el=document.getElementById(prefix+i)
+if(el)sum+=Number(el.value)
+}
+return sum
+}
+
+function forge_getEquipLevel(prefix){
+return 99+(forge_getTotal(prefix)*2)
+}
+
+function forge_calculate(){
+
+let timeLvl=forge_getTotal("timeAccel")
+let costLvl=forge_getTotal("costReduction")
+let sellLvl=forge_getTotal("sellPrice")
+let refineLvl=forge_getTotal("freeRefine")
+
+let timeAccel=timeLvl*0.02
+let costReduction=costLvl*0.01
+let sellPrice=sellLvl*0.01
+let refineChance=refineLvl*0.01
+
+document.getElementById("timeAccelStat").innerText="현재 효과 : "+(timeAccel*100).toFixed(1)+"%"
+document.getElementById("costReductionStat").innerText="현재 효과 : "+(costReduction*100).toFixed(1)+"%"
+document.getElementById("sellPriceStat").innerText="현재 효과 : "+(sellPrice*100).toFixed(1)+"%"
+document.getElementById("freeRefineStat").innerText="현재 효과 : "+(refineChance*100).toFixed(1)+"%"
+
+let currentAsc=Number(forge_currentAscEl.value)
+let targetAsc=Number(forge_targetAscEl.value)
+let currentLevel=Number(forge_currentLevelEl.value)
+let targetLevel=Number(forge_targetLevelEl.value)
+
+let ownedCoins=Number(forge_ownedCoinsEl.value)*1000000
+
+let cost=0
+let time=0
+
+while(true){
+
+if(currentAsc===targetAsc){
+for(let i=currentLevel+1;i<=targetLevel;i++){
+if(forge_forgeData[i]){
+cost+=forge_forgeData[i].cost
+time+=forge_forgeData[i].time
+}
+}
+break
+}
+
+for(let i=currentLevel+1;i<=35;i++){
+cost+=forge_forgeData[i].cost
+time+=forge_forgeData[i].time
+}
+
+cost+=3000000
+
+currentAsc++
+currentLevel=1
+}
+
+let finalCost=cost*(1-costReduction)
+let finalTime=time/(1+timeAccel)
+
+let sum=0
+forge_equipParts.forEach(p=>{sum+=forge_getEquipLevel(p)})
+let equipAvg=sum/forge_equipParts.length
+
+document.getElementById("equipAvgStat").innerText="평균 장비 최대 레벨 : "+equipAvg.toFixed(1)
+
+let hammerBase=Math.round(20*Math.pow(1.01,equipAvg-1))
+let hammerSell=hammerBase*(1+sellPrice)
+let refineMulti=1/(1-refineChance)
+
+let hammerValue=hammerSell*refineMulti
+let remainingCost=Math.max(0,finalCost-ownedCoins)
+let hammerNeed=remainingCost/hammerValue
+
+forge_costResult.innerText="총 비용 : "+forge_format(finalCost)
+forge_timeResult.innerText="총 시간 : "+forge_formatTime(finalTime)
+forge_hammerValueEl.innerText="망치 가치 : "+forge_format(hammerValue)
+forge_hammerCount.innerText="필요 망치 : "+Math.ceil(hammerNeed).toLocaleString()
+}
+
+function forge_format(n){
+n=Math.round(n)
+if(n>=1000000)return (n/1000000).toFixed(2).replace(/\.00$/,"")+"m"
+if(n>=1000)return (n/1000).toFixed(1).replace(/\.0$/,"")+"k"
+return n
+}
+
+function forge_formatTime(sec){
+let d=Math.floor(sec/86400)
+sec%=86400
+let h=Math.floor(sec/3600)
+sec%=3600
+let m=Math.floor(sec/60)
+return d+"d "+h+"h "+m+"m"
+}
+
+function forge_createTable(){
+let html=""
+for(let lvl in forge_forgeData){
+let row=forge_forgeData[lvl]
+html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td></tr>"
+}
+document.getElementById("forgeTable").innerHTML+=html
+}
+
+forge_createUI()
+forge_createTable()
+
+const forge_currentAscEl=document.getElementById("currentAsc")
+const forge_targetAscEl=document.getElementById("targetAsc")
+const forge_currentLevelEl=document.getElementById("currentLevel")
+const forge_targetLevelEl=document.getElementById("targetLevel")
+const forge_ownedCoinsEl=document.getElementById("ownedCoins")
+
+const forge_costResult=document.getElementById("costResult")
+const forge_timeResult=document.getElementById("timeResult")
+const forge_hammerValueEl=document.getElementById("hammerValue")
+const forge_hammerCount=document.getElementById("hammerCount")
+
+document.querySelectorAll("input,select").forEach(el=>{
+el.oninput=forge_calculate
+})
+
+forge_calculate()
+
+</script>
+
+</body>
+</html>
