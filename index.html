@@ -333,7 +333,8 @@ sec%=86400
 let h=Math.floor(sec/3600)
 sec%=3600
 let m=Math.floor(sec/60)
-return d+"d "+h+"h "+m+"m"
+let s=Mate.floor(sec)
+return d+"d "+h+"h "+m+"m "+s+"s"
 }
 
 function forge_createTable(){
