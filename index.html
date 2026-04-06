@@ -80,6 +80,7 @@ th{background:#333;}
 <div class="result" id="timeResult"></div>
 <div class="result" id="hammerValue"></div>
 <div class="result" id="hammerCount"></div>
+<div class="result" id="gemResult"></div>
 
 </div>
 
@@ -92,12 +93,25 @@ th{background:#333;}
 <th>Level</th>
 <th>Cost</th>
 <th>Time</th>
+<th>Gem</th>
 </tr>
 </table>
 
 </div>
 
 <script>
+
+function forge_calcGem(time, level){
+    if(level <= 4) return 0
+
+    const base = 652   // 10분 52초
+    const unit = 435   // 7분 15초
+
+    let t = time - base
+    if(t < 0) return 1
+
+    return Math.ceil(t / unit) + 1
+}
 
 const forge_forgeData={
 2:{cost:400,time:300},
@@ -252,6 +266,7 @@ let ownedCoins=Number(forge_ownedCoinsEl.value)*1000000
 
 let cost=0
 let time=0
+let totalGem = 0
 
 while(true){
 
@@ -260,6 +275,8 @@ for(let i=currentLevel+1;i<=targetLevel;i++){
 if(forge_forgeData[i]){
 cost+=forge_forgeData[i].cost
 time+=forge_forgeData[i].time
+let adjusted = forge_forgeData[i].time / (1 + timeAccel)
+totalGem += forge_calcGem(adjusted, i)
 }
 }
 break
@@ -268,6 +285,8 @@ break
 for(let i=currentLevel+1;i<=35;i++){
 cost+=forge_forgeData[i].cost
 time+=forge_forgeData[i].time
+let adjusted = forge_forgeData[i].time / (1 + timeAccel)
+totalGem += forge_calcGem(adjusted, i)
 }
 
 cost+=3000000
@@ -297,6 +316,8 @@ forge_costResult.innerText="총 비용 : "+forge_format(finalCost)
 forge_timeResult.innerText="총 시간 : "+forge_formatTime(finalTime)
 forge_hammerValueEl.innerText="망치 가치 : "+forge_format(hammerValue)
 forge_hammerCount.innerText="필요 망치 : "+Math.ceil(hammerNeed).toLocaleString()
+document.getElementById("gemResult").innerText =
+"즉시완료 보석 : " + totalGem.toLocaleString()
 }
 
 function forge_format(n){
@@ -319,7 +340,8 @@ function forge_createTable(){
 let html=""
 for(let lvl in forge_forgeData){
 let row=forge_forgeData[lvl]
-html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td></tr>"
+let gem = forge_calcGem(row.time, Number(lvl))
+html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
 }
 document.getElementById("forgeTable").innerHTML+=html
 }
