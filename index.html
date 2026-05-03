@@ -265,8 +265,10 @@ let targetLevel=Number(forge_targetLevelEl.value)
 let ownedCoins=Number(forge_ownedCoinsEl.value)*1000000
 
 let cost=0
+let ascCost=0
 let time=0
 let totalGem = 0
+const ASCENSION_COST = 3000000
 
 while(true){
 
@@ -289,13 +291,13 @@ let adjusted = forge_forgeData[i].time / (1 + timeAccel)
 totalGem += forge_calcGem(adjusted, i)
 }
 
-cost+=3000000
+ascCost+=ASCENSION_COST
 
 currentAsc++
 currentLevel=1
 }
 
-let finalCost=cost*(1-costReduction)
+let finalCost=(cost*(1-costReduction))+ascCost
 let finalTime=time/(1+timeAccel)
 
 let sum=0
@@ -345,6 +347,12 @@ let row=forge_forgeData[lvl]
 let gem = forge_calcGem(row.time, Number(lvl))
 html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
 }
+ html += "<tr style='background:#222;color:#ffd700;font-weight:bold;'>"
+    html += "<td>승천</td>"
+    html += "<td>"+forge_format(3000000)+"</td>"
+    html += "<td>-</td>"
+    html += "<td>-</td>"
+    html += "</tr>"
 document.getElementById("forgeTable").innerHTML+=html
 }
 
