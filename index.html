@@ -53,17 +53,17 @@ th{background:#333;}
 </select>
 
 현재 레벨
-<input id="currentLevel" type="number" value="1">
+<input id="currentLevel" type="number" min="1" max="35" value="1">
 
 <br><br>
 
 목표 승천
 <select id="targetAsc">
-<option>0</option><option>1</option><option>2</option><option>3</option>
+<option>0</option><option>1</option><option>2</option><option selected>3</option>
 </select>
 
 목표 레벨
-<input id="targetLevel" type="number" value="10">
+<input id="targetLevel" type="number" min="1" max="35" value="35">
 
 <br><br>
 
@@ -261,7 +261,16 @@ let currentAsc=Number(forge_currentAscEl.value)
 let targetAsc=Number(forge_targetAscEl.value)
 let currentLevel=Number(forge_currentLevelEl.value)
 let targetLevel=Number(forge_targetLevelEl.value)
-
+    
+if(
+    currentAsc > targetAsc ||
+    (currentAsc === targetAsc && currentLevel > targetLevel)
+){
+    costResult.innerText="목표 레벨이 현재보다 낮습니다."
+    return
+}
+    
+    
 let ownedCoins=Number(forge_ownedCoinsEl.value)*1000000
 
 let cost=0
