@@ -81,7 +81,6 @@ th{background:#333;}
 <div class="result" id="hammerValue"></div>
 <div class="result" id="hammerCount"></div>
 <div class="result" id="gemResult"></div>
-
 </div>
 
 <div class="card">
@@ -266,7 +265,11 @@ if(
     currentAsc > targetAsc ||
     (currentAsc === targetAsc && currentLevel > targetLevel)
 ){
-    costResult.innerText="목표 레벨이 현재보다 낮습니다."
+    forge_costResult.innerText="목표 레벨이 현재보다 낮습니다."
+    forge_timeResult.innerText=""
+    forge_hammerValueEl.innerText=""
+    forge_hammerCount.innerText=""
+    document.getElementById("gemResult").innerText=""
     return
 }
     
