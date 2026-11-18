@@ -147,22 +147,22 @@ const forge_forgeData={
 33:{cost:2780000,time:697200},
 34:{cost:2890000,time:727200},
 35:{cost:3000000,time:757200},
-// 3승천 36~50 레벨 데이터 추가 (비용 2.5m씩 증가, 지정 시간 초 단위 변환)
-36:{cost:5500000, time:175600},
-37:{cost:8000000, time:182800},
-38:{cost:10500000, time:190000},
-39:{cost:13000000, time:197200},
-40:{cost:15500000, time:204400},
-41:{cost:18000000, time:211600},
-42:{cost:20500000, time:218800},
-43:{cost:23000000, time:226000},
-44:{cost:25500000, time:233200},
-45:{cost:28000000, time:240400},
-46:{cost:30500000, time:247600},
-47:{cost:33000000, time:254800},
-48:{cost:35500000, time:262000},
-49:{cost:38000000, time:269200},
-50:{cost:40500000, time:2600000}
+// 36~50 레벨 (정확한 시간 데이터 적용)
+36:{cost:5500000, time: 20*86400 + 8*3600 + 6*60 + 40},
+37:{cost:8000000, time: 21*86400 + 46*60 + 40},
+38:{cost:10500000, time: 21*86400 + 17*3600 + 26*60 + 40},
+39:{cost:13000000, time: 22*86400 + 10*3600 + 6*60 + 40},
+40:{cost:15500000, time: 23*86400 + 2*3600 + 46*60 + 40},
+41:{cost:18000000, time: 23*86400 + 19*3600 + 26*60 + 40},
+42:{cost:20500000, time: 24*86400 + 12*3600 + 6*60 + 40},
+43:{cost:23000000, time: 25*86400 + 4*3600 + 46*60 + 40},
+44:{cost:25500000, time: 25*86400 + 21*3600 + 26*60 + 40},
+45:{cost:28000000, time: 26*86400 + 14*3600 + 6*60 + 40},
+46:{cost:30500000, time: 27*86400 + 6*3600 + 46*60 + 40},
+47:{cost:33000000, time: 27*86400 + 23*3600 + 26*60 + 40},
+48:{cost:35500000, time: 28*86400 + 16*3600 + 6*60 + 40},
+49:{cost:38000000, time: 29*86400 + 8*3600 + 46*60 + 40},
+50:{cost:40500000, time: 30*86400 + 1*3600 + 26*60 + 40} // 1mo (30일 가정) + 1h 26m 40s
 }
 
 const forge_categories=[
@@ -277,7 +277,6 @@ let targetAsc=Number(forge_targetAscEl.value)
 let currentLevel=Number(forge_currentLevelEl.value)
 let targetLevel=Number(forge_targetLevelEl.value)
 
-// 승천별 최대 레벨 제한 (0~2승천: 35레벨, 3승천: 50레벨)
 let maxCurLvl = (currentAsc === 3) ? 50 : 35;
 let maxTarLvl = (targetAsc === 3) ? 50 : 35;
 
@@ -306,7 +305,6 @@ const ASCENSION_COST = 3000000
 
 while(true){
 
-// 현재 승천과 목표 승천이 같을 때
 if(currentAsc===targetAsc){
 let limit = (currentAsc === 3) ? 50 : 35;
 let endLvl = Math.min(targetLevel, limit);
@@ -322,7 +320,6 @@ totalGem += forge_calcGem(adjusted, i)
 break
 }
 
-// 현재 승천이 3승천인데 35레벨을 초과해서 시작하거나 이동하는 경우
 if(currentAsc === 3){
 for(let i=currentLevel+1;i<=50;i++){
 if(forge_forgeData[i]){
@@ -332,11 +329,9 @@ let adjusted = forge_forgeData[i].time / (1 + timeAccel)
 totalGem += forge_calcGem(adjusted, i)
 }
 }
-// 3승천 50레벨에 도달했으므로 종료
 break;
 }
 
-// 0~2 승천 처리
 let maxLvl = 35;
 for(let i=currentLevel+1;i<=maxLvl;i++){
 if(forge_forgeData[i]){
@@ -385,7 +380,7 @@ return n
 }
 
 function forge_formatTime(sec){
-let mo=Math.floor(sec/2592000) // 대략적인 월 계산 기준 (30일)
+let mo=Math.floor(sec/2592000)
 sec%=2592000
 let d=Math.floor(sec/86400)
 sec%=86400
@@ -404,17 +399,28 @@ return res
 
 function forge_createTable(){
 let html=""
-for(let lvl in forge_forgeData){
-let row=forge_forgeData[lvl]
-let gem = forge_calcGem(row.time, Number(lvl))
-html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+// 1~35 레벨 출력
+for(let i=1; i<=35; i++){
+let row=forge_forgeData[i]
+let gem = forge_calcGem(row.time, i)
+html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
 }
+
+// 35와 36 사이에 승천 행 삽입
 html += "<tr style='background:#222;color:#ffd700;font-weight:bold;'>"
 html += "<td>승천</td>"
 html += "<td>"+forge_format(3000000)+"</td>"
 html += "<td>-</td>"
 html += "<td>-</td>"
 html += "</tr>"
+
+// 36~50 레벨 출력
+for(let i=36; i<=50; i++){
+let row=forge_forgeData[i]
+let gem = forge_calcGem(row.time, i)
+html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+}
+
 document.getElementById("forgeTable").innerHTML+=html
 }
 
