@@ -21,7 +21,7 @@ th{background:#333;}
 <body>
 
 <h1>포지마스터 대장간 망치 계산기</h1>
-<p>제작자 : 구 21서버 Dominant 클랜 리더 Troud (3승천 50레벨 확장 반영)</p>
+<p>제작자 : 구 21서버 Dominant 클랜 리더 Troud(3승천 50레벨 확장 반영)</p>
 
 <div class="card">
 <h2>기술 트리 티어 설정</h2>
@@ -178,8 +178,9 @@ weapon:"무기",glove:"장갑",necklace:"목걸이",ring:"반지",
 helmet:"헬멧",armor:"갑옷",boots:"신발",belt:"벨트"
 }
 
-function forge_createSelect(id, maxTier){
-let html="<select id='"+id+"' onchange='forge_handleTierChange(\""+id+"\","+maxTier+")'>"
+function forge_createSelect(prefix, tierNum, maxTier){
+let fullId = prefix + tierNum;
+let html="<select id='"+fullId+"' onchange='forge_handleTierChange(\""+prefix+"\","+tierNum+","+maxTier+")'>"
 for(let i=0;i<=5;i++){html+="<option>"+i+"</option>"}
 html+="</select>"
 return html
@@ -189,7 +190,7 @@ function forge_createUI(){
 let html=""
 forge_categories.forEach(cat=>{
 html+="<div><b>"+cat.name+"</b><br>"
-for(let i=1;i<=cat.maxTier;i++){html+="T"+i+" "+forge_createSelect(cat.key+i, cat.maxTier)+" "}
+for(let i=1;i<=cat.maxTier;i++){html+="T"+i+" "+forge_createSelect(cat.key, i, cat.maxTier)+" "}
 html+="<div class='stat' id='"+cat.key+"Stat'></div></div><br>"
 })
 document.getElementById("tiers").innerHTML=html
@@ -198,49 +199,50 @@ forge_createEquipUI()
 
 function forge_createEquipUI(){
 let all=""
-for(let i=1;i<=5;i++){all+="T"+i+" "+forge_createSelect("equipAll"+i, 5)+" "}
+for(let i=1;i<=5;i++){all+="T"+i+" "+forge_createSelect("equipAll", i, 5)+" "}
 document.getElementById("equipAll").innerHTML=all
 
 let parts=""
 forge_equipParts.forEach(p=>{
 parts+="<div>"+forge_equipNames[p]+"<br>"
-for(let i=1;i<=5;i++){parts+="T"+i+" "+forge_createSelect(p+i, 5)+" "}
+for(let i=1;i<=5;i++){parts+="T"+i+" "+forge_createSelect(p, i, 5)+" "}
 parts+="</div><br>"
 })
 document.getElementById("equipParts").innerHTML=parts
 }
 
-function forge_handleTierChange(id, maxTier){
-let tier=Number(id.slice(-1))
-let prefix=id.slice(0,-1)
-let val=Number(document.getElementById(id).value)
+function forge_handleTierChange(prefix, tierNum, maxTier){
+let selectEl = document.getElementById(prefix + tierNum);
+let val = Number(selectEl.value);
 
 // 0 선택 시 상위 티어 모두 0으로 초기화
-if(val===0){
-for(let i=tier+1;i<=maxTier;i++){
-let el=document.getElementById(prefix+i)
-if(el)el.value=0
+if(val === 0){
+for(let i = tierNum + 1; i <= maxTier; i++){
+let el = document.getElementById(prefix + i);
+if(el) el.value = 0;
 }
 }
 
 // 2 이상 선택 시 하위 티어는 전부 5로 설정
-if(val>=2){
-for(let i=1;i<tier;i++){
-let el=document.getElementById(prefix+i)
-if(el)el.value=5
+if(val >= 2){
+for(let i = 1; i < tierNum; i++){
+let el = document.getElementById(prefix + i);
+if(el) el.value = 5;
 }
 }
 
 // 전체 부위 변경 시 개별 부위에도 일괄 적용
-if(prefix==="equipAll"){
+if(prefix === "equipAll"){
 forge_equipParts.forEach(p=>{
-for(let i=1;i<=5;i++){
-document.getElementById(p+i).value=document.getElementById("equipAll"+i).value
+for(let i = 1; i <= 5; i++){
+let targetEl = document.getElementById(p + i);
+let sourceEl = document.getElementById("equipAll" + i);
+if(targetEl && sourceEl) targetEl.value = sourceEl.value;
 }
-})
+});
 }
 
-forge_calculate()
+forge_calculate();
 }
 
 function forge_getTotal(prefix, maxTier){
