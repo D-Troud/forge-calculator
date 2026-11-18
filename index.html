@@ -1,19 +1,23 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>포지마스터 대장간 망치 계산기</title>
 
 <style>
-body{font-family:Arial;background:#0f0f0f;color:white;padding:30px;}
-h1{color:#ffd700;}
-.card{background:#1e1e1e;padding:20px;margin-bottom:20px;border-radius:10px;}
-select,input{padding:6px;margin:3px;}
-.result{font-size:20px;color:#00ffc3;margin-top:10px;}
-.stat{color:#ffd700;margin-top:5px;}
-table{border-collapse:collapse;width:100%;}
-td,th{border:1px solid #444;padding:6px;text-align:center;}
-th{background:#333;}
+body{font-family:Arial, sans-serif;background:#0f0f0f;color:white;padding:30px;box-sizing:border-box;margin:0;}
+h1{color:#ffd700;margin-top:0;}
+.card{background:#1e1e1e;padding:20px;margin-bottom:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.4);}
+select,input{padding:6px 10px;margin:3px;background:#2a2a2a;color:white;border:1px solid #444;border-radius:6px;font-size:14px;}
+select:focus,input:focus{outline:none;border-color:#ffd700;}
+.result{font-size:20px;color:#00ffc3;margin-top:10px;font-weight:bold;}
+.stat{color:#ffd700;margin-top:5px;font-size:14px;}
+table{border-collapse:collapse;width:100%;margin-top:10px;}
+td,th{border:1px solid #444;padding:8px;text-align:center;}
+th{background:#333;color:#ffd700;}
+tr:nth-child(even){background:#181818;}
 </style>
 
 </head>
@@ -43,7 +47,6 @@ th{background:#333;}
 
 </div>
 
-<!-- 🔥 위치 이동됨 -->
 <div class="card">
 <h2>승천 / 레벨 설정</h2>
 
@@ -73,7 +76,6 @@ th{background:#333;}
 </div>
 
 <div class="card">
-
 <h2>계산 결과</h2>
 
 <div class="result" id="costResult"></div>
@@ -84,7 +86,6 @@ th{background:#333;}
 </div>
 
 <div class="card">
-
 <h2>대장간 업그레이드 데이터 (1~50)</h2>
 
 <table id="forgeTable">
@@ -100,6 +101,7 @@ th{background:#333;}
 
 <script>
 
+// 즉시 완료 보석 계산 함수
 function forge_calcGem(time, level){
     if(level <= 4) return 0
 
@@ -112,6 +114,7 @@ function forge_calcGem(time, level){
     return Math.ceil(t / unit) + 1
 }
 
+// 대장간 레벨별 업그레이드 비용 및 시간(초) 데이터
 const forge_forgeData={
 2:{cost:400,time:300},
 3:{cost:700,time:900},
@@ -147,7 +150,7 @@ const forge_forgeData={
 33:{cost:2780000,time:697200},
 34:{cost:2890000,time:727200},
 35:{cost:3000000,time:757200},
-// 36~50 레벨 (정확한 시간 데이터 적용)
+// 36~50 레벨 (3승천 확장 구간: 비용 2.5m씩 증가, 지정 시간 초 단위)
 36:{cost:5500000, time: 20*86400 + 8*3600 + 6*60 + 40},
 37:{cost:8000000, time: 21*86400 + 46*60 + 40},
 38:{cost:10500000, time: 21*86400 + 17*3600 + 26*60 + 40},
@@ -162,7 +165,7 @@ const forge_forgeData={
 47:{cost:33000000, time: 27*86400 + 23*3600 + 26*60 + 40},
 48:{cost:35500000, time: 28*86400 + 16*3600 + 6*60 + 40},
 49:{cost:38000000, time: 29*86400 + 8*3600 + 46*60 + 40},
-50:{cost:40500000, time: 30*86400 + 1*3600 + 26*60 + 40} // 1mo (30일 가정) + 1h 26m 40s
+50:{cost:40500000, time: 30*86400 + 1*3600 + 26*60 + 40}
 }
 
 const forge_categories=[
@@ -212,10 +215,11 @@ document.getElementById("equipParts").innerHTML=parts
 }
 
 function forge_handleTierChange(id, maxTier){
-
 let tier=Number(id.slice(-1))
 let prefix=id.slice(0,-1)
-let val=Number(document.getElementById(id).value)
+let elCurrent = document.getElementById(id)
+if(!elCurrent) return
+let val=Number(elCurrent.value)
 
 if(val===0){
 for(let i=tier+1;i<=maxTier;i++){
@@ -234,7 +238,9 @@ if(el && Number(el.value)===0)el.value=5
 if(prefix==="equipAll"){
 forge_equipParts.forEach(p=>{
 for(let i=1;i<=5;i++){
-document.getElementById(p+i).value=document.getElementById("equipAll"+i).value
+let targetEl = document.getElementById(p+i)
+let sourceEl = document.getElementById("equipAll"+i)
+if(targetEl && sourceEl) targetEl.value = sourceEl.value
 }
 })
 }
@@ -256,7 +262,6 @@ return 99+(forge_getTotal(prefix, 5)*2)
 }
 
 function forge_calculate(){
-
 let timeLvl=forge_getTotal("timeAccel", 6)
 let costLvl=forge_getTotal("costReduction", 6)
 let sellLvl=forge_getTotal("sellPrice", 6)
@@ -302,8 +307,10 @@ let ascCost=0
 let time=0
 let totalGem = 0
 const ASCENSION_COST = 3000000
+let loopSafety = 0
 
-while(true){
+while(loopSafety < 200){
+loopSafety++
 
 if(currentAsc===targetAsc){
 let limit = (currentAsc === 3) ? 50 : 35;
@@ -379,9 +386,8 @@ if(n>=1000)return (n/1000).toFixed(1).replace(/\.0$/,"")+"k"
 return n
 }
 
+// 30일 이상도 월(mo) 대신 일(d) 단위로 표시
 function forge_formatTime(sec){
-let mo=Math.floor(sec/2592000)
-sec%=2592000
 let d=Math.floor(sec/86400)
 sec%=86400
 let h=Math.floor(sec/3600)
@@ -391,19 +397,20 @@ sec%=60
 let s=Math.floor(sec)
 
 let res = ""
-if(mo > 0) res += mo+"mo "
-if(d > 0 || mo > 0) res += d+"d "
+if(d > 0) res += d+"d "
 res += h+"h "+m+"m "+s+"s"
 return res
 }
 
 function forge_createTable(){
 let html=""
-// 1~35 레벨 출력
-for(let i=1; i<=35; i++){
+// 2~35 레벨 출력 (1레벨 데이터 없음 방지)
+for(let i=2; i<=35; i++){
 let row=forge_forgeData[i]
+if(row){
 let gem = forge_calcGem(row.time, i)
 html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+}
 }
 
 // 35와 36 사이에 승천 행 삽입
@@ -417,8 +424,10 @@ html += "</tr>"
 // 36~50 레벨 출력
 for(let i=36; i<=50; i++){
 let row=forge_forgeData[i]
+if(row){
 let gem = forge_calcGem(row.time, i)
 html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+}
 }
 
 document.getElementById("forgeTable").innerHTML+=html
@@ -440,6 +449,7 @@ const forge_hammerCount=document.getElementById("hammerCount")
 
 document.querySelectorAll("input,select").forEach(el=>{
 el.oninput=forge_calculate
+el.onchange=forge_calculate
 })
 
 forge_calculate()
@@ -448,3 +458,4 @@ forge_calculate()
 
 </body>
 </html>
+```
