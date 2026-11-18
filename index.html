@@ -100,8 +100,7 @@ th{background:#333;}
 <script>
 
 function forge_calcGem(time, level){
-    if(level <= 4) return 0
-
+    // 4레벨 이하 고정 조건 제거됨 (다른 레벨과 동일한 공식 적용)
     const base = 652   // 10분 52초
     const unit = 435   // 7분 15초
 
@@ -146,7 +145,7 @@ const forge_forgeData={
 33:{cost:2780000,time:697200},
 34:{cost:2890000,time:727200},
 35:{cost:3000000,time:757200},
-// 36~50 레벨 (제공해주신 정확한 시간 데이터 초 단위 환산 반영)
+// 36~50 레벨 (정확한 시간 데이터 초 단위 환산 반영)
 36:{cost:5500000, time: 20*86400 + 8*3600 + 6*60 + 40},
 37:{cost:8000000, time: 21*86400 + 46*60 + 40},
 38:{cost:10500000, time: 21*86400 + 17*3600 + 26*60 + 40},
@@ -395,7 +394,6 @@ return res
 
 function forge_createTable(){
 let html=""
-// 2~35 레벨 생성 (1레벨은 데이터가 없으므로 제외하여 에러 방지)
 for(let i=2; i<=35; i++){
 let row=forge_forgeData[i]
 if(row){
@@ -404,7 +402,6 @@ html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTi
 }
 }
 
-// 35레벨 바로 다음에 승천 행 삽입
 html += "<tr style='background:#222;color:#ffd700;font-weight:bold;'>"
 html += "<td>승천</td>"
 html += "<td>"+forge_format(3000000)+"</td>"
@@ -412,7 +409,6 @@ html += "<td>-</td>"
 html += "<td>-</td>"
 html += "</tr>"
 
-// 36~50 레벨 생성
 for(let i=36; i<=50; i++){
 let row=forge_forgeData[i]
 if(row){
