@@ -21,7 +21,7 @@ th{background:#333;}
 <body>
 
 <h1>포지마스터 대장간 망치 계산기</h1>
-<p>제작자 : 21서버 Dominant 클랜 리더 Troud (T6 추가 및 3승천 50레벨 확장 반영)</p>
+<p>제작자 : 21서버 Dominant 클랜 리더 Troud (30일 표기 반영)</p>
 
 <div class="card">
 <h2>기술 트리 티어 설정</h2>
@@ -385,8 +385,7 @@ return n
 }
 
 function forge_formatTime(sec){
-let mo=Math.floor(sec/2592000) // 대략적인 월 계산 기준 (30일)
-sec%=2592000
+// 1mo 대신 일(day) 단위로 누적 표기 (30d 등)
 let d=Math.floor(sec/86400)
 sec%=86400
 let h=Math.floor(sec/3600)
@@ -396,8 +395,7 @@ sec%=60
 let s=Math.floor(sec)
 
 let res = ""
-if(mo > 0) res += mo+"mo "
-if(d > 0 || mo > 0) res += d+"d "
+if(d > 0) res += d+"d "
 res += h+"h "+m+"m "+s+"s"
 return res
 }
