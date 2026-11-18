@@ -21,7 +21,7 @@ th{background:#333;}
 <body>
 
 <h1>포지마스터 대장간 망치 계산기</h1>
-<p>제작자 : 21서버 Dominant 클랜 리더 Troud (36~50레벨 시간 데이터 정밀 반영)</p>
+<p>제작자 : 구 21서버 Dominant 클랜 리더 Troud</p>
 
 <div class="card">
 <h2>기술 트리 티어 설정</h2>
@@ -43,7 +43,6 @@ th{background:#333;}
 
 </div>
 
-<!-- 🔥 위치 이동됨 -->
 <div class="card">
 <h2>승천 / 레벨 설정</h2>
 
@@ -227,7 +226,7 @@ if(el)el.value=0
 if(val>=2){
 for(let i=1;i<tier;i++){
 let el=document.getElementById(prefix+i)
-if(el && Number(el.value)===0)el.value=5
+if(el)el.value=5
 }
 }
 
@@ -396,17 +395,32 @@ return res
 
 function forge_createTable(){
 let html=""
-for(let lvl in forge_forgeData){
-let row=forge_forgeData[lvl]
-let gem = forge_calcGem(row.time, Number(lvl))
-html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+// 2~35 레벨 생성 (1레벨은 데이터가 없으므로 제외하여 에러 방지)
+for(let i=2; i<=35; i++){
+let row=forge_forgeData[i]
+if(row){
+let gem = forge_calcGem(row.time, i)
+html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
 }
+}
+
+// 35레벨 바로 다음에 승천 행 삽입
 html += "<tr style='background:#222;color:#ffd700;font-weight:bold;'>"
 html += "<td>승천</td>"
 html += "<td>"+forge_format(3000000)+"</td>"
 html += "<td>-</td>"
 html += "<td>-</td>"
 html += "</tr>"
+
+// 36~50 레벨 생성
+for(let i=36; i<=50; i++){
+let row=forge_forgeData[i]
+if(row){
+let gem = forge_calcGem(row.time, i)
+html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+}
+}
+
 document.getElementById("forgeTable").innerHTML+=html
 }
 
