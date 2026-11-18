@@ -21,7 +21,7 @@ th{background:#333;}
 <body>
 
 <h1>포지마스터 대장간 망치 계산기</h1>
-<p>제작자 : 21서버 Dominant 클랜 리더 Troud (30일 표기 수정 반영)</p>
+<p>제작자 : 21서버 Dominant 클랜 리더 Troud (T6 추가 및 3승천 50레벨 확장 반영)</p>
 
 <div class="card">
 <h2>기술 트리 티어 설정</h2>
@@ -43,6 +43,7 @@ th{background:#333;}
 
 </div>
 
+<!-- 🔥 위치 이동됨 -->
 <div class="card">
 <h2>승천 / 레벨 설정</h2>
 
@@ -146,22 +147,22 @@ const forge_forgeData={
 33:{cost:2780000,time:697200},
 34:{cost:2890000,time:727200},
 35:{cost:3000000,time:757200},
-// 36~50 레벨
-36:{cost:5500000, time: 20*86400 + 8*3600 + 6*60 + 40},
-37:{cost:8000000, time: 21*86400 + 46*60 + 40},
-38:{cost:10500000, time: 21*86400 + 17*3600 + 26*60 + 40},
-39:{cost:13000000, time: 22*86400 + 10*3600 + 6*60 + 40},
-40:{cost:15500000, time: 23*86400 + 2*3600 + 46*60 + 40},
-41:{cost:18000000, time: 23*86400 + 19*3600 + 26*60 + 40},
-42:{cost:20500000, time: 24*86400 + 12*3600 + 6*60 + 40},
-43:{cost:23000000, time: 25*86400 + 4*3600 + 46*60 + 40},
-44:{cost:25500000, time: 25*86400 + 21*3600 + 26*60 + 40},
-45:{cost:28000000, time: 26*86400 + 14*3600 + 6*60 + 40},
-46:{cost:30500000, time: 27*86400 + 6*3600 + 46*60 + 40},
-47:{cost:33000000, time: 27*86400 + 23*3600 + 26*60 + 40},
-48:{cost:35500000, time: 28*86400 + 16*3600 + 6*60 + 40},
-49:{cost:38000000, time: 29*86400 + 8*3600 + 46*60 + 40},
-50:{cost:40500000, time: 30*86400 + 1*3600 + 26*60 + 40}
+// 3승천 36~50 레벨 데이터 추가 (비용 2.5m씩 증가, 지정 시간 초 단위 변환)
+36:{cost:5500000, time:175600},
+37:{cost:8000000, time:182800},
+38:{cost:10500000, time:190000},
+39:{cost:13000000, time:197200},
+40:{cost:15500000, time:204400},
+41:{cost:18000000, time:211600},
+42:{cost:20500000, time:218800},
+43:{cost:23000000, time:226000},
+44:{cost:25500000, time:233200},
+45:{cost:28000000, time:240400},
+46:{cost:30500000, time:247600},
+47:{cost:33000000, time:254800},
+48:{cost:35500000, time:262000},
+49:{cost:38000000, time:269200},
+50:{cost:40500000, time:2600000}
 }
 
 const forge_categories=[
@@ -211,6 +212,7 @@ document.getElementById("equipParts").innerHTML=parts
 }
 
 function forge_handleTierChange(id, maxTier){
+
 let tier=Number(id.slice(-1))
 let prefix=id.slice(0,-1)
 let val=Number(document.getElementById(id).value)
@@ -254,6 +256,7 @@ return 99+(forge_getTotal(prefix, 5)*2)
 }
 
 function forge_calculate(){
+
 let timeLvl=forge_getTotal("timeAccel", 6)
 let costLvl=forge_getTotal("costReduction", 6)
 let sellLvl=forge_getTotal("sellPrice", 6)
@@ -274,6 +277,7 @@ let targetAsc=Number(forge_targetAscEl.value)
 let currentLevel=Number(forge_currentLevelEl.value)
 let targetLevel=Number(forge_targetLevelEl.value)
 
+// 승천별 최대 레벨 제한 (0~2승천: 35레벨, 3승천: 50레벨)
 let maxCurLvl = (currentAsc === 3) ? 50 : 35;
 let maxTarLvl = (targetAsc === 3) ? 50 : 35;
 
@@ -299,11 +303,10 @@ let ascCost=0
 let time=0
 let totalGem = 0
 const ASCENSION_COST = 3000000
-let loopSafety = 0
 
-while(loopSafety < 200){
-loopSafety++
+while(true){
 
+// 현재 승천과 목표 승천이 같을 때
 if(currentAsc===targetAsc){
 let limit = (currentAsc === 3) ? 50 : 35;
 let endLvl = Math.min(targetLevel, limit);
@@ -319,6 +322,7 @@ totalGem += forge_calcGem(adjusted, i)
 break
 }
 
+// 현재 승천이 3승천인데 35레벨을 초과해서 시작하거나 이동하는 경우
 if(currentAsc === 3){
 for(let i=currentLevel+1;i<=50;i++){
 if(forge_forgeData[i]){
@@ -328,9 +332,11 @@ let adjusted = forge_forgeData[i].time / (1 + timeAccel)
 totalGem += forge_calcGem(adjusted, i)
 }
 }
+// 3승천 50레벨에 도달했으므로 종료
 break;
 }
 
+// 0~2 승천 처리
 let maxLvl = 35;
 for(let i=currentLevel+1;i<=maxLvl;i++){
 if(forge_forgeData[i]){
@@ -379,6 +385,8 @@ return n
 }
 
 function forge_formatTime(sec){
+let mo=Math.floor(sec/2592000) // 대략적인 월 계산 기준 (30일)
+sec%=2592000
 let d=Math.floor(sec/86400)
 sec%=86400
 let h=Math.floor(sec/3600)
@@ -388,32 +396,25 @@ sec%=60
 let s=Math.floor(sec)
 
 let res = ""
-if(d > 0) res += d+"d "
+if(mo > 0) res += mo+"mo "
+if(d > 0 || mo > 0) res += d+"d "
 res += h+"h "+m+"m "+s+"s"
 return res
 }
 
 function forge_createTable(){
 let html=""
-for(let i=1; i<=35; i++){
-let row=forge_forgeData[i]
-let gem = forge_calcGem(row.time, i)
-html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
+for(let lvl in forge_forgeData){
+let row=forge_forgeData[lvl]
+let gem = forge_calcGem(row.time, Number(lvl))
+html+="<tr><td>"+lvl+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
 }
-
 html += "<tr style='background:#222;color:#ffd700;font-weight:bold;'>"
 html += "<td>승천</td>"
 html += "<td>"+forge_format(3000000)+"</td>"
 html += "<td>-</td>"
 html += "<td>-</td>"
 html += "</tr>"
-
-for(let i=36; i<=50; i++){
-let row=forge_forgeData[i]
-let gem = forge_calcGem(row.time, i)
-html+="<tr><td>"+i+"</td><td>"+forge_format(row.cost)+"</td><td>"+forge_formatTime(row.time)+"</td><td>"+gem+"</td></tr>"
-}
-
 document.getElementById("forgeTable").innerHTML+=html
 }
 
